@@ -14,10 +14,15 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
+include_directories(include)
+
 add_executable(
   dedup
+  src/helper.cpp
   src/main.cpp
 )
+
+target_include_directories(dedup PRIVATE include)
 
 add_executable(
   dedup_tests

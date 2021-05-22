@@ -3,13 +3,9 @@
 #include <fstream>
 #include <vector>
 #include <string>
-#include <set>
-#include <map>
-#include <tuple>
-#include <unordered_map>
-#include <type_traits>
 
-constexpr int DEFAULT_HINT = 1 << 6;
+#include "dedup/er.hpp"
+#include "dedup/helper.hpp"
 
 namespace fs = std::filesystem;
 
@@ -42,86 +38,53 @@ std::ostream& operator<<(std::ostream& os, const Movie& movie)
     return os;
 }
 
-template <typename T>
-std::string str_vector(const std::vector<T>& v)
+er::Blocks make_blocks(const std::vector<Movie>& movies)
 {
-    std::ostringstream os;
-
-    auto it = v.cbegin();
-    os << *it;
-
-    // it = std::next(it);
-    while (++it != v.cend()) 
-        os << ", " << *it;
-
-    return os.str();
-}
-
-std::vector<std::string> split(std::string&& s, char delimiter, const int hint=DEFAULT_HINT)
-{
-    std::vector<std::string> result;
-    result.reserve(hint);
-
-    size_t start = 0;
-    size_t end = s.find_first_of(delimiter);
-    
-    while (end <= std::string::npos)
-    {
-	    result.emplace_back(s.substr(start, end - start));
-
-	    if (end == std::string::npos)
-	    	break;
-
-    	start = end+1;
-    	end = s.find_first_of(delimiter, start);
-    }
-
-    return result;
-}
-
-// er = entity resolution
-namespace er {
-
-template <typename E, typename F>
-auto make_standard_blocks(const std::vector<E>& entities, F&& generate_bk)
-{
-    // Standard blocking (Fellegiet. al., JASS 1969)
-    using R = typename std::result_of<F(E)>::type;
-
-    const auto sz = entities.size();
-    std::map<R, std::vector<int>> blocks;
-
-    for (int i = 0; i < sz; ++i) {
-        const auto& entity = entities[i];
-
-        auto& block = blocks[generate_bk(entity)];
-        block.emplace_back(i);
-    }
-
-    return blocks;
-}
-
-} // namespace er
-
-
-std::set<int, int> make_pairs(const std::vector<Movie>& movies)
-{
-    // const auto blocks = er::make_standard_blocks(movies);
+    // Block building & block refinement
     auto blocking_key = [](const Movie& m) { return m.actors; };
-    const auto blocks = er::make_standard_blocks(movies, blocking_key);
+    auto blocks = er::make_standard_blocks(movies, blocking_key);
+    er::block_purging(blocks, 2, 2);
 
-    // Block processing / Block refinement
-    // We know the collection of movies contains only one single duplicate -> max size of each block is 2
+    er::Blocks final_blocks;
+    for (auto it = blocks.cbegin(); it != blocks.cend(); ++it)
+        final_blocks.emplace_back(it->second);
 
-    // for (const auto& m : movies) {
-    //     auto it = map.find(m.actors);
-    //     if (it == map.cend())
-    //         map.emplace("");
-    //     else
-    //         map.
-    // }
-    std::set<int, int> result;
-    return result;
+    return final_blocks;
+}
+
+inline double step_similarity(const int x, const int y, const int offset) {
+    return static_cast<double>(std::abs(x - y) <= offset);
+}
+
+inline double linear_similarity(const int x, const int y, const double scale) {
+    return static_cast<double>(((2 * std::abs(x - y)) / (x + y)) <= scale);
+}
+
+double similarity_function(const Movie& rhs, const Movie& lhs, const std::vector<double>& weights)
+{
+    // avg = sum(a*weights) / sum(weights)
+    // Ex: id, year, length, genre, directors, actors
+    //      0,  1.0,      1,     0,       1.0,    1.0
+    // 
+    // weight: 0, 30, 30, 15, 15, 10
+    // 
+    // avg = (1*30 + 1*30 + 0*15 + 1*15 + 1*10) / 100 = 0.85
+    const auto sz = weights.size();
+
+    std::vector<double> tmp;
+    tmp.reserve(weights.size());
+    tmp.push_back(step_similarity(rhs.year, lhs.year, 1));
+    tmp.push_back(linear_similarity(rhs.length, lhs.length, 0.05));
+    tmp.push_back(helper::lcs(rhs.genre, lhs.genre));
+    tmp.push_back(helper::lcs(rhs.directors, lhs.directors));
+    tmp.push_back(helper::lcs(rhs.actors, lhs.actors));
+
+    double sum = 0.f;
+    for (int i = 0; i < weights.size(); ++i) {
+        sum += tmp[i] * weights[i];
+    }
+
+    return sum / 100;
 }
 
 void print_usage(const char* const bin)
@@ -170,11 +133,27 @@ int main(int argc, char* argv[])
     // entry['year']
 
     for (std::string line; std::getline(input, line);)
-        movies.emplace_back(split(std::move(line), '\t', 6));
+        movies.emplace_back(helper::split(std::move(line), '\t', 6));
 
-    // std::cout << content[1] << std::endl;
+    std::cout << "Movie collection size: " << movies.size() << std::endl;
+    er::Blocks blocks = make_blocks(movies);
 
-    auto pairs = make_pairs(movies);
-    // auto pairs = make_pairs(movies, [](const Movie& m) { return m.actors; });
+    const double threshold = 0.85;
+    const std::vector<double> weights { 30, 30, 15, 15, 10 };
+    
+    // Expected: 279229 duplicates
+    // Found: 102938 duplicates
+    const std::vector<std::pair<int, int>> duplicates = er::iterative_blocking(movies, blocks, similarity_function, weights, threshold);
+    std::cout << duplicates.size() << " duplicates found" << std::endl;
+
+    if (!duplicates.empty()) {
+        std::ofstream output("result.tsv", std::ios::out);
+        if (!output.is_open())
+            throw std::runtime_error("Error: failed to write result.tsv");
+
+        for (const auto& p : duplicates)
+            output << movies[p.first].id << "\t" << movies[p.second].id << "\n";
+    }
+
     return 0;
 }

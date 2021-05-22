@@ -71,3 +71,18 @@ You will be assessed on the following points (with highest priority first):
 - This is a fuzzy matching problem, meaning that there is no perfect solution. Sometimes, two duplicates will have exactly the same actors, sometimes they will have no actor in common. It's up to your algorithm to decide if it has enough information to make a match
 
 Good luck!
+
+# Prerequisites
+* CMake
+
+# How to build
+````cpp
+cmake -S . -B build
+cmake --build build
+````
+
+````cpp
+cd build && ctest
+./build/dedup movies.tsv
+cat result.tsv | head -n 50
+````
