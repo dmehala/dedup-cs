@@ -1,5 +1,6 @@
 #pragma once
 
+#include <istream>
 #include <fstream>
 #include <unordered_map>
 #include <vector>
@@ -8,6 +9,11 @@
 
 namespace csv {
 
+namespace separator {
+    const char tab    = '\t';
+    const char comma  = ',';
+}
+
 using Header = std::unordered_map<std::string, int>;
 
 // @brief Utility class to manipulate csv rows and provides nice way to query by column
@@ -15,17 +21,19 @@ using Header = std::unordered_map<std::string, int>;
 class Row final
 {
 public:
-    Row() = default;
+    Row();
     Row(std::vector<std::string>&& rows, std::shared_ptr<Header> header);
 
-    bool operator==(const Row& rhs) const noexcept;
+    bool empty() const noexcept;
 
+    bool operator==(const Row& rhs) const noexcept;
     std::string& operator[](const std::string& col_name);
 
 private:
     std::vector<std::string>    m_rows;
     std::shared_ptr<Header>     m_header;
 };
+
 
 class Reader final
 {
@@ -69,13 +77,10 @@ class Reader final
     };
 
 public:
-    Reader(std::ifstream& input, const char delimiter = ',');
+    Reader(std::ifstream& input, const char separator = separator::comma);
+    Reader(const std::string& input, const char separator = separator::comma);  ///< For testing purpose
 
-    // Reader(const Reader&)  = delete;
-    // Reader&(const Reader&) = delete;
-
-    inline void reset() noexcept { m_input.clear(); m_input.seekg(0, m_input.beg); }
-    inline bool is_eof() const noexcept { return m_input.eof(); }
+    inline bool is_eof() const noexcept { return m_input->eof(); }
 
     Row read_row() noexcept;
 
@@ -83,12 +88,16 @@ public:
     iterator end() noexcept;
 
 private:
-    int                     m_cols;
-    bool                    m_eof;
-    const char              m_delimiter;
-    std::string             m_buffer;
-    std::ifstream&          m_input;
-    std::shared_ptr<Header> m_header_map;
+    void set_header();
+    inline void reset() noexcept { m_input->clear(); m_input->seekg(m_content_beg, m_input->beg); }
+
+private:
+    int                             m_cols;         ///< Number of columns by row
+    int                             m_content_beg; 
+    const char                      m_separator;
+    std::string                     m_buffer;
+    std::unique_ptr<std::istream>   m_input;
+    std::shared_ptr<Header>         m_header_map;
 };
 
-}
+} // namespace csv

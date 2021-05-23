@@ -104,15 +104,10 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    // TODO: Encapsulate logic in csv.hpp
     std::vector<Movie> movies;
     csv::Reader reader(input, '\t');
-    for(auto it = reader.begin(); it != reader.end(); ++it)
-        movies.emplace_back(*it);
-
-    // TODO: Target
-    // for (csv::Row& row : reader.begin())
-    //   movies.emplace_back(row);
+    for (csv::Row& row : reader)
+      movies.emplace_back(row);
 
     std::cout << "Movie collection size: " << movies.size() << std::endl;
 
