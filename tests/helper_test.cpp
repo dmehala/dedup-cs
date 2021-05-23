@@ -21,13 +21,24 @@ TEST(Helper, splitTestOneElement)
     EXPECT_EQ(ExpectedSplit({"", "foobar"}), helper::split(":foobar", ':'));
 }
 
-TEST(Helper, splitWrongDelimiter)
+TEST(Helper, splitTestWrongDelimiter)
 {
     EXPECT_EQ(ExpectedSplit({"foo:bar::foobar"}), helper::split("foo:bar::foobar", ','));
 }
 
-TEST(Helper, split)
+TEST(Helper, splitTest)
 {
     const ExpectedSplit expected ({"id", "year", "length", "genre", "directors", "actors"});
     EXPECT_EQ(expected, helper::split("id\tyear\tlength\tgenre\tdirectors\tactors", '\t'));
+}
+
+TEST(Helper, lcsTestSame)
+{
+    EXPECT_EQ(0, helper::lcs("", ""));
+    EXPECT_EQ(6, helper::lcs("foobar", "foobar"));
+}
+
+TEST(Helper, lcsTest)
+{
+    EXPECT_EQ(3, helper::lcs("stone", "longest"));
 }

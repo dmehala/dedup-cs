@@ -39,10 +39,8 @@ std::vector<std::string> generate_qgram(const std::string& in, const int q) {
 
 double lcs(const std::string& a, const std::string& b)
 {
-    // if (a.size() != b.size())
-    //     throw std::runtime_error("Both string must have the same length.");
-    const int m = a.size(); // +1
-    const int n = b.size(); // +1
+    const int m = a.size();
+    const int n = b.size();
 
     int accumulator[m + 1][n + 1];
     int i, j;
