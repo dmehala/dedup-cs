@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.14)
 project(dedup)
 
 set(CMAKE_CXX_STANDARD 17)
+set(SOURCES src/csv.cpp src/helper.cpp)
+set(TEST_SOURCES tests/helper_test.cpp tests/csv_test.cpp)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -16,18 +18,11 @@ enable_testing()
 
 include_directories(include)
 
-add_executable(
-  dedup
-  src/helper.cpp
-  src/main.cpp
-)
+add_executable(dedup ${SOURCES} src/main.cpp)
 
 target_include_directories(dedup PRIVATE include)
 
-add_executable(
-  dedup_tests
-  tests/hello_test.cpp
-)
+add_executable(dedup_tests ${SOURCES} ${TEST_SOURCES})
 
 target_link_libraries(
   dedup_tests

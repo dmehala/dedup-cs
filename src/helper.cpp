@@ -2,23 +2,25 @@
 
 namespace helper {
 
-std::vector<std::string> split(std::string&& s, char delimiter, const int hint)
+std::vector<std::string> split(std::string s, char delimiter, const int hint)
 {
     std::vector<std::string> result;
     result.reserve(hint);
 
-    size_t start = 0;
-    size_t end = s.find_first_of(delimiter);
-    
-    while (end <= std::string::npos)
-    {
-	    result.emplace_back(s.substr(start, end - start));
+    if (!s.empty()) {
+        size_t start = 0;
+        size_t end = s.find_first_of(delimiter);
+        
+        while (end <= std::string::npos)
+        {
+            result.emplace_back(s.substr(start, end - start));
 
-	    if (end == std::string::npos)
-	    	break;
+            if (end == std::string::npos)
+                break;
 
-    	start = end+1;
-    	end = s.find_first_of(delimiter, start);
+            start = end+1;
+            end = s.find_first_of(delimiter, start);
+        }
     }
 
     return result;

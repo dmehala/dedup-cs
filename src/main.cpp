@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 
+#include "dedup/csv.hpp"
 #include "dedup/er.hpp"
 #include "dedup/helper.hpp"
 
@@ -12,13 +13,13 @@ namespace fs = std::filesystem;
 class Movie
 {
 public:
-    Movie(std::vector<std::string>&& entry)
-        : id(entry[0])
-        , genre(entry[3])
-        , directors(entry[4])
-        , actors(entry[5])
-        , year(std::stoi(entry[1]))
-        , length(std::stoi(entry[2]))
+    Movie(csv::Row& entry)
+        : id(entry["id"])
+        , genre(entry["genre"])
+        , directors(entry["directors"])
+        , actors(entry["actors"])
+        , year(std::stoi(entry["year"]))
+        , length(std::stoi(entry["length"]))
     {}
 
     friend std::ostream& operator<<(std::ostream& os, const Movie& movie);
@@ -36,20 +37,6 @@ std::ostream& operator<<(std::ostream& os, const Movie& movie)
 {
     os << movie.id << ", " << movie.year << ", " << movie.length << ", " << movie.genre << ", " << movie.directors << ", " << movie.actors;
     return os;
-}
-
-er::Blocks make_blocks(const std::vector<Movie>& movies)
-{
-    // Block building & block refinement
-    auto blocking_key = [](const Movie& m) { return m.actors; };
-    auto blocks = er::make_standard_blocks(movies, blocking_key);
-    er::block_purging(blocks, 2, 2);
-
-    er::Blocks final_blocks;
-    for (auto it = blocks.cbegin(); it != blocks.cend(); ++it)
-        final_blocks.emplace_back(it->second);
-
-    return final_blocks;
 }
 
 inline double step_similarity(const int x, const int y, const int offset) {
@@ -119,30 +106,25 @@ int main(int argc, char* argv[])
 
     // TODO: Encapsulate logic in csv.hpp
     std::vector<Movie> movies;
-    std::string header;
-    std::getline(input, header);
-    
-    // str -> idx
-    // std::unordered_map<std::string, int> header_map;
-    // auto headers = split(std::move(header), '\t', 6);
-    // const int sz_headers = headers.size();
-    // for (int i = 0; i < sz_headers; ++i) {
-    //     header_map[headers[i]] = i;
-    // }
-    // How to use: but needs to override operator[]
-    // entry['year']
+    csv::Reader reader(input, '\t');
+    for(auto it = reader.begin(); it != reader.end(); ++it)
+        movies.emplace_back(*it);
 
-    for (std::string line; std::getline(input, line);)
-        movies.emplace_back(helper::split(std::move(line), '\t', 6));
+    // TODO: Target
+    // for (csv::Row& row : reader.begin())
+    //   movies.emplace_back(row);
 
     std::cout << "Movie collection size: " << movies.size() << std::endl;
-    er::Blocks blocks = make_blocks(movies);
+
+    // Block building & block refinement
+    auto blocking_key = [](const Movie& m) { return m.actors; };
+    er::Blocks blocks = er::make_standard_blocks(movies, blocking_key);
+    er::block_purging(blocks, 2, 2);
 
     const double threshold = 0.85;
     const std::vector<double> weights { 30, 30, 15, 15, 10 };
     
-    // Expected: 279229 duplicates
-    // Found: 102938 duplicates
+    // Expected duplicates: 279229 duplicates
     const std::vector<std::pair<int, int>> duplicates = er::iterative_blocking(movies, blocks, similarity_function, weights, threshold);
     std::cout << duplicates.size() << " duplicates found" << std::endl;
 

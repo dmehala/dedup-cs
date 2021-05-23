@@ -6,23 +6,14 @@
 
 namespace helper {
 
-constexpr int DEFAULT_HINT = 1 << 6;
+const char ws[]             = " \n\r\f\v";
+constexpr int DEFAULT_HINT  = 1 << 6;
 
-std::vector<std::string> split(std::string&& s, char delimiter, const int hint=DEFAULT_HINT);
+std::vector<std::string> split(std::string s, char delimiter, const int hint=DEFAULT_HINT);
 
-template <typename T>
-std::string str_vector(const std::vector<T>& v)
+inline void rtrim(std::string& s, const char* const _ws = ws)
 {
-    std::ostringstream os;
-
-    auto it = v.cbegin();
-    os << *it;
-
-    // it = std::next(it);
-    while (++it != v.cend()) 
-        os << ", " << *it;
-
-    return os.str();
+    s.erase(s.find_last_not_of(_ws) + 1);
 }
 
 std::vector<std::string> generate_qgram(const std::string& in, const int q);

@@ -6,6 +6,7 @@
 #include <map>
 #include <tuple>
 #include <unordered_map>
+#include <algorithm>
 
 #include "helper.hpp"
 
@@ -16,21 +17,26 @@ namespace er {
 using Block = std::vector<int>;
 using Blocks = std::vector<er::Block>;
 
+// Block building algorithm
 template <typename E, typename F>
-auto make_standard_blocks(const std::vector<E>& entities, F&& generate_bk)
+Blocks make_standard_blocks(const std::vector<E>& entities, F&& generate_bk)
 {
     // Standard blocking (Fellegiet. al., JASS 1969)
     using R = typename std::result_of<F(E)>::type;
 
     const auto sz = entities.size();
-    std::map<R, Block> blocks;
+    std::map<R, Block> map;
 
     for (int i = 0; i < sz; ++i) {
         const auto& entity = entities[i];
 
-        Block& block = blocks[generate_bk(entity)];
+        Block& block = map[generate_bk(entity)];
         block.emplace_back(i);
     }
+
+    Blocks blocks;
+    for (auto it = map.cbegin(); it != map.cend(); ++it)
+        blocks.emplace_back(it->second);
 
     return blocks;
 }
@@ -57,18 +63,22 @@ auto make_standard_blocks(const std::vector<E>& entities, F&& generate_bk)
 // }
 
 template <typename E>
-auto make_qgrams_blocks(const std::vector<E>& entities, const int q)
+Blocks make_qgrams_blocks(const std::vector<E>& entities, const int q)
 {
     const auto sz = entities.size();
-    std::map<std::string, std::vector<int>> blocks;
+    std::map<std::string, std::vector<int>> map;
 
     for (int i = 0; i < sz; ++i) {
         const auto& entity = entities[i];
         const std::vector<std::string> blocking_keys = generate_qgram(std::to_string(entity.year), q);
 
         for (const auto& key : blocking_keys)
-            blocks[key].emplace_back(i);
+            map[key].emplace_back(i);
     }
+
+    Blocks blocks;
+    for (auto it = map.cbegin(); it != map.cend(); ++it)
+        blocks.emplace_back(it->second);    
 
     return blocks;
 }
@@ -101,20 +111,17 @@ auto make_qgrams_blocks(const std::vector<E>& entities, const int q)
 //     return filtered_blocks;
 // }
 
-// Block purging discards blocks that exceed an upper limit on block
-// cardinality.
-template <typename B>
-void block_purging(B& blocks, const int max, const int min=0)
+// Block refinement algorithm
+
+// @brief Discards blocks that exceed an upper limit
+// @details Block purging discards blocks which cardanality that does not meet upper or lower bounds limits 
+inline void block_purging(Blocks& blocks, const int max, const int min=0)
 {
-    for (auto it = blocks.cbegin(); it != blocks.cend(); ) {
-        const auto cardinality = it->second.size();
-        if (cardinality < min || cardinality > max)
-            blocks.erase(it++);
-        else
-            ++it;
-    }
+    blocks.erase(std::remove_if(blocks.begin(), blocks.end(), [min, max](Block& block) { return block.size() < min || block.size() > max; }), blocks.cend());
 }
 
+
+// Filtering algorithm
 template <typename E, typename F>
 std::vector<std::pair<int, int>> iterative_blocking(const std::vector<E>& entities, const Blocks& blocks, F&& similarity_func, const std::vector<double> weights, const double threshold)
 {
