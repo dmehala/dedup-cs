@@ -1,88 +1,53 @@
-# Problem
-Movies are collected from different data providers. Data providers don't always use the same information to describe 
-the same movie. For example, the list of actors may be incomplete. The director may be missing. 
-The movie length may change slightly. The release year may vary according to the region.
-
-A movie has the following attributes: 
-- id : unique in the provided list 
-- year: release year
-- length: running duration in minutes
-- genre: zero, one or many categories
-- actors: zero, one or many actors
-- directors: zero, one or many directors
-
-For two entries describing the same movie, it's possible to have the following differences:
-- id: each id is unique
-- year: 1 year more or less at maximum 
-- length: 5% more or less at maximum, 2 * |x - y|/(x + y) <= 0.05 where x and y is the provided movie length
-- genre: different order, or missing one or many genres 
-- actors: different order, or missing one or many actors
-- directors: different order, or missing one or many directors
-
+# Problem statement
 Given a list of movies where each movie is described by two different providers, the task is to identify the duplications.
-
-Take the two following lines for example, they both refer to the same movie but have different information:
-```
-id	year	length	genre	directors	actors
-f7b5b8cb-293b-4ced-ba19-e5b781935489    2007    60      Horror  Jamie Sharps    Alan Gilman,Heather Hamilton,Lisa Lovett,Reggie Provencher,Jareth Ryan
-a86cbd11-5eed-41e6-9da7-42bf3eb1c99a    2008    63      Horror  \N      Jareth Ryan,Reggie Provencher,Alan Gilman,Heather Hamilton,Lisa Lovett
-```
-## Input
-The file `movies.tsv` is provided. It contains a list of movies.
-The first line contains movie attribute name. Then we have the movie list.
-Each field is separated by a tab **\t** and line is separated by **\n**.
-Unknown field is presented as **\N**. For example: 
-```
-id	year	length	genre	directors	actors
-tt2355936	2013	89	Drama	Lina Chamie	Lucas Zamberlan,Gregório Mussatti Cesare,Dira Paes,Julia Weiss,Antônia Ricca,Marco Ricca
-tt0226204	1999	95	Drama,Sci-Fi	Kazuya Konaka	Timothy Breese Miller,J. David Brimmer,Jessica Calvello,Shannon Conley
-tt1226780	2008	92	Horror	Shawn Cain	Chuck Williams,Neil D'Monte,Larry Laverty,Stefano Capone
-tt0109288	1994	92	Action,Comedy,Crime	Mike Binder	Damon Wayans,David Alan Grier,Robin Givens,Christopher Lawford
-tt0444519	2006	90	Comedy,Sci-Fi	Eric Lartigau	Kad Merad,Olivier Baroux,Marina Foïs,Guillaume Canet
-tt1847669	2011	103	Documentary	Thunska Pansittivorakul	\N
-tt5127394	2015	107	Animation,Fantasy,Sci-Fi	Paris Tosen	\N
-```
-
-## Output
-Provide a text file with the list of matchings. Separate field by tab **\t** and lines by **\n**. **One movie id can only be used in one matching.**
-```
-f7b5b8cb-293b-4ced-ba19-e5b781935489    a86cbd11-5eed-41e6-9da7-42bf3eb1c99a 
-```
-
-# Submission
-The solution should have **zero** third-party dependencies, except for your tests. 
-Both matching result and source code should be submitted. **Please don't publish your solution on the internet**.
-
-# Scoring
-When we receive your submission, we'll calculate the right matchings by comparing the provided output and the reference. Suppose that we have M matchings in the reference and 
-N matchings in your output. Among the N matchings, K matchings are correct. Two metrics are calculated:
-- Recall: **K/M** correct matchings over reference
-- Precision: **K/N** correct matchings over actual result
-
-# Notes
-You will be assessed on the following points (with highest priority first):
-- A working and optimized solution, with the highest possible score
-- A clear explaination of your choices
-- A decent code quality, with some coverage
-
-# Clarifications
-- Each movie in the list contains ONE SINGLE duplicate. You should not try to match 3 or more movies together
-- The test is manually graded, not automatically. We will be reading the code and we will value how optimized your approach is, even if the score is low because of an unimportant mistake
-- This is a fuzzy matching problem, meaning that there is no perfect solution. Sometimes, two duplicates will have exactly the same actors, sometimes they will have no actor in common. It's up to your algorithm to decide if it has enough information to make a match
-
-Good luck!
+You can read the full problem statement [here.](Problem.md)
 
 # Prerequisites
+* C++17 compiler
 * CMake
+
+If you want to read the Jupyter notebook, you will need:
+* Jupyter-lab
+* Python 3.6+
+* All packages in requirements.txt
 
 # How to build
 ````cpp
-cmake -S . -B build
-cmake --build build
+$ cmake -S . -B build
+$ cmake --build build
 ````
 
 ````cpp
-cd build && ctest
-./build/dedup movies.tsv
-cat result.tsv | head -n 50
+$ cd build && ctest
+$ ./build/dedup movies.tsv
+
+$ cat result.tsv | head -n 10
+ec2adfef-1bb7-4575-80db-3af811f91847    66046834-07ae-404d-b9bb-363c36d9578d
+48bc77bb-5241-4f4f-8cfc-1a40325d9e55    ee8f8272-7afe-4c2b-8086-df3d323080ed
+19e8bdb7-98fa-467f-a3be-0f5d24fc22ea    61eec0f8-255f-4cec-923a-7ff393541070
+8793e4c4-3c37-4df8-9e96-a4457802c2e0    fcfc01c0-384f-4dcf-8894-f4ce3322e258
+66513e81-a1ed-4b33-bef7-a1d5c9dcd503    790cd1ed-e82a-4697-8790-9cea72c0442e
+726c7b77-ea62-4b74-85f6-df797ebd8209    0e8f9b23-0806-4038-a8fd-c536c4322d9b
+8f19b8aa-8567-4576-8509-211b31458ec8    8a5c7b51-ee7c-451b-a514-f6e535bdd492
+a19c4fa8-cba5-42bc-9bc7-1f2402592ec5    809e1a1e-7f85-4ee5-9ca3-147b401ace2a
+d0513672-e759-4f35-a54f-edd0df993377    854265c1-94c8-472d-9945-3486ecd3a829
+37f4262c-c907-4e9a-bb6f-cfb0b8bcdc2e    a1ccda1b-32b7-4147-afbc-de892617561c
 ````
+
+# Decision making
+_Disclamer_: This is the first time I encounter a deduplication problem, I am no data scientist, neither a data engineer (even if I have a master degre in Business Intelligence).
+
+I found something intersesting in the problem statement, _"Each movie in the list contains ONE SINGLE"_. That could mean, the expected number of duplicates is 558458/2 = 279229. The program returns 102938 duplicate, that give us:
+* PC = 102938/279229 =
+
+Before coding, I needed to explore the dataset. You can find the result in [data-exploration.ipynb](data-exploration.ipynb).
+The code is written in C++17, but I am not used to it, that is probably why I do not use std::string_view more or other new features.
+
+## CSV Reader
+The implementation is kind of ok in term of performance but if we wanted to do better and be more scalable, this is how I would do it:
+1. Use C API instead of C++ API for file manipulation (fopen, fgets and so on)
+2. Memory-map the file and read it by chunks, can be time consuming to make it crossplatfomr
+3. Split the works between multiple threads
+
+## Blocking algorithm
+This is where I failed. I use a standard blocking algorithm, but there is so many blocking techniques (block building + block refinement).

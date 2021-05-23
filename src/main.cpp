@@ -107,7 +107,7 @@ int main(int argc, char* argv[])
     std::vector<Movie> movies;
     csv::Reader reader(input, '\t');
     for (csv::Row& row : reader)
-      movies.emplace_back(row);
+        movies.emplace_back(row);
 
     std::cout << "Movie collection size: " << movies.size() << std::endl;
 
@@ -120,8 +120,8 @@ int main(int argc, char* argv[])
     const std::vector<double> weights { 30, 30, 15, 15, 10 };
     
     // Expected duplicates: 279229 duplicates
-    const std::vector<std::pair<int, int>> duplicates = er::iterative_blocking(movies, blocks, similarity_function, weights, threshold);
-    std::cout << duplicates.size() << " duplicates found" << std::endl;
+    const std::vector<std::pair<int, int>> duplicates = er::matching(movies, blocks, similarity_function, weights, threshold);
+    std::cout << duplicates.size() << " duplicates found, check result.tsv for more details." << std::endl;
 
     if (!duplicates.empty()) {
         std::ofstream output("result.tsv", std::ios::out);

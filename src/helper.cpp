@@ -41,30 +41,26 @@ double lcs(const std::string& a, const std::string& b)
 {
     // if (a.size() != b.size())
     //     throw std::runtime_error("Both string must have the same length.");
-    const int m = a.size();
-    const int n = b.size();
+    const int m = a.size(); // +1
+    const int n = b.size(); // +1
 
-    int L[m + 1][n + 1];
+    int accumulator[m + 1][n + 1];
     int i, j;
   
-    /* Following steps build L[m+1][n+1] in bottom up fashion. Note 
-      that L[i][j] contains length of LCS of X[0..i-1] and Y[0..j-1] */
-    for (i = 0; i <= m; i++) {
-        for (j = 0; j <= n; j++) {
+    for (i = 0; i <= m; ++i) {
+        for (j = 0; j <= n; ++j) {
             if (i == 0 || j == 0)
-                L[i][j] = 0;
+                accumulator[i][j] = 0;
   
             else if (a[i - 1] == b[j - 1])
-                L[i][j] = L[i - 1][j - 1] + 1;
+                accumulator[i][j] = accumulator[i - 1][j - 1] + 1;
   
             else
-                L[i][j] = std::max(L[i - 1][j], L[i][j - 1]);
+                accumulator[i][j] = std::max(accumulator[i - 1][j], accumulator[i][j - 1]);
         }
     }
   
-    /* L[m][n] contains length of LCS for X[0..n-1] and Y[0..m-1] */
-    return L[m][n];
-    // return 1.f;
+    return accumulator[m][n];
 }
 
-} // helper namespace
+} // namespace helper

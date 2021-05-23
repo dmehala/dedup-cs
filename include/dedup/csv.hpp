@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <type_traits>
 
 namespace csv {
 
@@ -77,8 +78,8 @@ class Reader final
     };
 
 public:
-    Reader(std::ifstream& input, const char separator = separator::comma);
-    Reader(const std::string& input, const char separator = separator::comma);  ///< For testing purpose
+    template <typename Stream, typename = std::enable_if_t<std::is_base_of<std::istream, Stream>::value>>
+    Reader(Stream& input, const char separator = separator::comma);
 
     inline bool is_eof() const noexcept { return m_input->eof(); }
 
@@ -93,11 +94,23 @@ private:
 
 private:
     int                             m_cols;         ///< Number of columns by row
-    int                             m_content_beg; 
+    int                             m_content_beg;  ///< Position after header
     const char                      m_separator;
     std::string                     m_buffer;
-    std::unique_ptr<std::istream>   m_input;
+    std::istream*                   m_input;        ///< Don't need ownership but need polymorphism       
     std::shared_ptr<Header>         m_header_map;
 };
+
+template <typename Stream, typename = std::enable_if_t<std::is_base_of<std::istream, Stream>::value>>
+Reader::Reader(Stream& input, const char separator)
+    : m_cols(0)
+    , m_content_beg(0)
+    , m_separator(separator)
+    , m_input(static_cast<std::istream*>(&input))
+    , m_header_map(std::make_shared<Header>())
+{
+    reset();
+    set_header();
+}
 
 } // namespace csv

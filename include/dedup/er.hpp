@@ -41,27 +41,6 @@ Blocks make_standard_blocks(const std::vector<E>& entities, F&& generate_bk)
     return blocks;
 }
 
-// template <typename E, typename F>
-// auto make_custom_standard_blocks(const std::vector<E>& entities, F&& generate_bk)
-// {
-//     // Standard blocking (Fellegiet. al., JASS 1969)
-//     using R = typename std::result_of<F(E)>::type;
-
-//     const auto sz = entities.size();
-//     std::map<R, std::vector<int>> blocks;
-
-//     for (int i = 0; i < sz; ++i) {
-//         const auto& entity = entities[i];
-
-//         R key = generate_bk(entity);
-//         blocks[key-1].emplace_back(i);
-//         blocks[key].emplace_back(i);
-//         blocks[key+1].emplace_back(i);
-//     }
-
-//     return blocks;
-// }
-
 template <typename E>
 Blocks make_qgrams_blocks(const std::vector<E>& entities, const int q)
 {
@@ -70,7 +49,7 @@ Blocks make_qgrams_blocks(const std::vector<E>& entities, const int q)
 
     for (int i = 0; i < sz; ++i) {
         const auto& entity = entities[i];
-        const std::vector<std::string> blocking_keys = generate_qgram(std::to_string(entity.year), q);
+        const std::vector<std::string> blocking_keys = generate_qgram(std::to_string(entity.actors), q);
 
         for (const auto& key : blocking_keys)
             map[key].emplace_back(i);
@@ -120,10 +99,9 @@ inline void block_purging(Blocks& blocks, const int max, const int min=0)
     blocks.erase(std::remove_if(blocks.begin(), blocks.end(), [min, max](Block& block) { return block.size() < min || block.size() > max; }), blocks.cend());
 }
 
-
 // Filtering algorithm
 template <typename E, typename F>
-std::vector<std::pair<int, int>> iterative_blocking(const std::vector<E>& entities, const Blocks& blocks, F&& similarity_func, const std::vector<double> weights, const double threshold)
+std::vector<std::pair<int, int>> matching(const std::vector<E>& entities, const Blocks& blocks, F&& similarity_func, const std::vector<double> weights, const double threshold)
 {
     std::vector<std::pair<int, int>> result;
 

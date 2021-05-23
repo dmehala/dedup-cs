@@ -36,23 +36,6 @@ std::string& Row::operator[](const std::string& col_name)
     return m_rows[it->second];
 }
 
-Reader::Reader(std::ifstream& input, const char separator)
-    : m_separator(separator)
-    , m_input(&input)
-    , m_header_map(std::make_shared<Header>())
-{
-    reset();
-    set_header();
-}
-
-Reader::Reader(const std::string& input, const char separator)
-    : m_separator(separator)
-    , m_input(std::make_unique<std::istringstream>(input))
-    , m_header_map(std::make_shared<Header>())
-{
-    set_header();
-}
-
 void Reader::set_header()
 {
     // read header and build an utility map
