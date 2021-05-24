@@ -18,7 +18,7 @@ $ cmake --build build
 ````
 
 ````cpp
-$ cd build && ctest
+$ cd build && ctest && cd -
 $ # CPU: AMD Ryzen 7 3700X@3593 Mhz, Memory: 32GB
 $ time ./build/dedup movies.tsv
 Movie collection size: 558458

@@ -101,7 +101,7 @@ private:
     std::shared_ptr<Header>         m_header_map;
 };
 
-template <typename Stream, typename = std::enable_if_t<std::is_base_of<std::istream, Stream>::value>>
+template <typename Stream, typename>
 Reader::Reader(Stream& input, const char separator)
     : m_cols(0)
     , m_content_beg(0)
