@@ -15,62 +15,39 @@ class Movie
 public:
     Movie(csv::Row& entry)
         : id(entry["id"])
-        , genre(entry["genre"])
-        , directors(entry["directors"])
         , actors(entry["actors"])
         , year(std::stoi(entry["year"]))
         , length(std::stoi(entry["length"]))
-    {}
-
-    friend std::ostream& operator<<(std::ostream& os, const Movie& movie);
+        , genres(helper::split(entry["genre"], ','))
+        , directors(helper::split(entry["directors"], ','))
+        , actors_set(helper::split(entry["actors"], ','))
+    {
+        std::sort(genres.begin(), genres.end());
+        std::sort(directors.begin(), directors.end());
+        std::sort(actors_set.begin(), actors_set.end());
+    }
 
 public:
     std::string id;
-    std::string genre;
-    std::string directors;
     std::string actors;
     int         year;
     int         length;
+    std::vector<std::string> genres;
+    std::vector<std::string> directors;
+    std::vector<std::string> actors_set;
 };
 
-std::ostream& operator<<(std::ostream& os, const Movie& movie)
-{
-    os << movie.id << ", " << movie.year << ", " << movie.length << ", " << movie.genre << ", " << movie.directors << ", " << movie.actors;
-    return os;
-}
-
-inline double step_similarity(const int x, const int y, const int offset) {
-    return static_cast<double>(std::abs(x - y) <= offset);
-}
-
-inline double linear_similarity(const int x, const int y, const double scale) {
-    return static_cast<double>(((2 * std::abs(x - y)) / (x + y)) <= scale);
-}
-
+// @brief Returns a score describing how similar two movies are.
 double similarity_function(const Movie& rhs, const Movie& lhs, const std::vector<double>& weights)
 {
     // avg = sum(a*weights) / sum(weights)
-    // Ex: id, year, length, genre, directors, actors
-    //      0,  1.0,      1,     0,       1.0,    1.0
-    // 
-    // weight: 0, 30, 30, 15, 15, 10
-    // 
-    // avg = (1*30 + 1*30 + 0*15 + 1*15 + 1*10) / 100 = 0.85
-    const auto sz = weights.size();
-
-    std::vector<double> tmp;
-    tmp.reserve(weights.size());
-    tmp.push_back(step_similarity(rhs.year, lhs.year, 1));
-    tmp.push_back(linear_similarity(rhs.length, lhs.length, 0.05));
-    tmp.push_back(helper::lcs(rhs.genre, lhs.genre));
-    tmp.push_back(helper::lcs(rhs.directors, lhs.directors));
-    tmp.push_back(helper::lcs(rhs.actors, lhs.actors));
-
     double sum = 0.f;
-    for (int i = 0; i < weights.size(); ++i) {
-        sum += tmp[i] * weights[i];
-    }
-
+    sum += helper::step_similarity(rhs.year, lhs.year, 1)               * weights[0];
+    sum += helper::linear_similarity(rhs.length, lhs.length, 0.05)      * weights[1];
+    sum += helper::jaccard_similarity(rhs.genres, lhs.genres)           * weights[2];
+    sum += helper::jaccard_similarity(rhs.directors, lhs.directors)     * weights[3];
+    sum += helper::jaccard_similarity(rhs.actors_set, lhs.actors_set)   * weights[4];
+    
     return sum / 100;
 }
 
@@ -116,8 +93,8 @@ int main(int argc, char* argv[])
     er::Blocks blocks = er::make_standard_blocks(movies, blocking_key);
     er::block_purging(blocks, 2, 2);
 
-    const double threshold = 0.85;
-    const std::vector<double> weights { 30, 30, 15, 15, 10 };
+    const double threshold = 0.75;
+    const std::vector<double> weights { 30, 30, 10, 15, 15 };
     
     // Expected duplicates: 279229 duplicates
     const std::vector<std::pair<int, int>> duplicates = er::matching(movies, blocks, similarity_function, weights, threshold);

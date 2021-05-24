@@ -19,7 +19,14 @@ $ cmake --build build
 
 ````cpp
 $ cd build && ctest
-$ ./build/dedup movies.tsv
+$ # CPU: AMD Ryzen 7 3700X@3593 Mhz, Memory: 32GB
+$ time ./build/dedup movies.tsv
+Movie collection size: 558458
+101244 duplicates found, check result.tsv for more details.
+
+real    0m6.069s
+user    0m4.169s
+sys     0m0.872s
 
 $ cat result.tsv | head -n 10
 ec2adfef-1bb7-4575-80db-3af811f91847    66046834-07ae-404d-b9bb-363c36d9578d
@@ -37,10 +44,8 @@ d0513672-e759-4f35-a54f-edd0df993377    854265c1-94c8-472d-9945-3486ecd3a829
 # Decision making
 _Disclamer_: This is the first time I encounter a deduplication problem, I am no data scientist, neither a data engineer (even if I have a master degre in Business Intelligence).
 
-I found something intersesting in the problem statement, _"Each movie in the list contains ONE SINGLE"_. That could mean, the expected number of duplicates is 558458/2 = 279229. The program returns 102938 duplicate, that give us:
-* PC = 102938/279229 =
+I suggest to read [data-exploration.ipynb](data-exploration.ipynb) to better understand how I tried to solve the problem.
 
-Before coding, I needed to explore the dataset. You can find the result in [data-exploration.ipynb](data-exploration.ipynb).
 The code is written in C++17, but I am not used to it, that is probably why I do not use std::string_view more or other new features.
 
 ## CSV Reader

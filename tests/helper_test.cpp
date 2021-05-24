@@ -42,3 +42,24 @@ TEST(Helper, lcsTest)
 {
     EXPECT_EQ(3, helper::lcs("stone", "longest"));
 }
+
+TEST(Helper, jaccardSimilarityTestEmptyInput)
+{
+    const std::vector<int> s1 {};
+    const std::vector<int> s2 { 5, 6, 7, 8 };
+    EXPECT_EQ(0.f, helper::jaccard_similarity(s1, s2));
+}
+
+TEST(Helper, jaccardSimilarityTestDisjoint)
+{
+    const std::vector<int> s1 { 1, 2, 3, 4 };
+    const std::vector<int> s2 { 5, 6, 7, 8 };
+    EXPECT_EQ(0.f, helper::jaccard_similarity(s1, s2));
+}
+
+TEST(Helper, jaccardSimilarityTest)
+{
+    const std::vector<int> s1 { 1, 2, 3, 4 };
+    const std::vector<int> s2 { 3, 4 };
+    EXPECT_EQ(0.5, helper::jaccard_similarity(s1, s2));
+}
