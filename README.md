@@ -22,23 +22,23 @@ $ cd build && ctest
 $ # CPU: AMD Ryzen 7 3700X@3593 Mhz, Memory: 32GB
 $ time ./build/dedup movies.tsv
 Movie collection size: 558458
-101244 duplicates found, check result.tsv for more details.
+173247 duplicates found, check result.tsv for more details.
 
-real    0m6.069s
-user    0m4.169s
-sys     0m0.872s
+real    0m8.276s
+user    0m6.312s
+sys     0m0.969s
 
 $ cat result.tsv | head -n 10
-ec2adfef-1bb7-4575-80db-3af811f91847    66046834-07ae-404d-b9bb-363c36d9578d
-48bc77bb-5241-4f4f-8cfc-1a40325d9e55    ee8f8272-7afe-4c2b-8086-df3d323080ed
-19e8bdb7-98fa-467f-a3be-0f5d24fc22ea    61eec0f8-255f-4cec-923a-7ff393541070
-8793e4c4-3c37-4df8-9e96-a4457802c2e0    fcfc01c0-384f-4dcf-8894-f4ce3322e258
-66513e81-a1ed-4b33-bef7-a1d5c9dcd503    790cd1ed-e82a-4697-8790-9cea72c0442e
-726c7b77-ea62-4b74-85f6-df797ebd8209    0e8f9b23-0806-4038-a8fd-c536c4322d9b
-8f19b8aa-8567-4576-8509-211b31458ec8    8a5c7b51-ee7c-451b-a514-f6e535bdd492
-a19c4fa8-cba5-42bc-9bc7-1f2402592ec5    809e1a1e-7f85-4ee5-9ca3-147b401ace2a
-d0513672-e759-4f35-a54f-edd0df993377    854265c1-94c8-472d-9945-3486ecd3a829
-37f4262c-c907-4e9a-bb6f-cfb0b8bcdc2e    a1ccda1b-32b7-4147-afbc-de892617561c
+48926a09-3404-4c3c-94c6-2538717a2b57    3ce62d4f-cac0-48b6-b4b0-69b457f0a683
+05b2c1dc-60a7-4c1f-b68d-04a9184af4cd    3ccb48da-0b13-49aa-8ded-98d9152261b7
+0aedb3b5-c0d8-46b5-9ee9-ee702decd9f2    8f93875a-50f2-41c8-a1de-f9fa9df5d3d8
+17cf6934-9522-401a-9919-6f6b0375bee9    d297c059-21b5-4050-a70b-9c4c3ee503de
+fdb26426-58ed-426f-9c24-372bb75033c1    efca3ef7-caec-41ab-93aa-6c443f871e23
+215fe554-d8b8-4eaa-a8c7-1f0073de8b31    1d52d85a-9942-4c2d-be8f-e1bbd2f54bde
+2bd12e53-78ed-484a-b525-93f4c9d44c62    3154c479-a29c-4549-b65b-56408294b85b
+ea665869-d88e-4138-a2ea-86f20e843f0a    83f7f44a-fb12-45ab-a630-01769c64903f
+ef0ea64a-4a8c-406a-ae79-905e6c5e1186    cca59175-1465-457e-8a3b-850a550be87c
+21fc2ba3-6eec-47a0-adb9-ce2a3cf93cdb    efa6f695-f203-4821-8a91-68c9e846c631
 ````
 
 # Decision making
@@ -53,6 +53,3 @@ The implementation is kind of ok in term of performance but if we wanted to do b
 1. Use C API instead of C++ API for file manipulation (fopen, fgets and so on)
 2. Memory-map the file and read it by chunks, can be time consuming to make it crossplatfomr
 3. Split the works between multiple threads
-
-## Blocking algorithm
-This is where I failed. I use a standard blocking algorithm, but there is so many blocking techniques (block building + block refinement).

@@ -15,26 +15,26 @@ class Movie
 public:
     Movie(csv::Row& entry)
         : id(entry["id"])
-        , actors(entry["actors"])
+        , directors_str(entry["directors"])
         , year(std::stoi(entry["year"]))
         , length(std::stoi(entry["length"]))
+        , actors(helper::split(entry["actors"], ','))
         , genres(helper::split(entry["genre"], ','))
         , directors(helper::split(entry["directors"], ','))
-        , actors_set(helper::split(entry["actors"], ','))
     {
         std::sort(genres.begin(), genres.end());
         std::sort(directors.begin(), directors.end());
-        std::sort(actors_set.begin(), actors_set.end());
+        std::sort(actors.begin(), actors.end());
     }
 
 public:
     std::string id;
-    std::string actors;
+    std::string directors_str;
     int         year;
     int         length;
+    std::vector<std::string> actors;
     std::vector<std::string> genres;
     std::vector<std::string> directors;
-    std::vector<std::string> actors_set;
 };
 
 // @brief Returns a score describing how similar two movies are.
@@ -42,11 +42,11 @@ double similarity_function(const Movie& rhs, const Movie& lhs, const std::vector
 {
     // avg = sum(a*weights) / sum(weights)
     double sum = 0.f;
-    sum += helper::step_similarity(rhs.year, lhs.year, 1)               * weights[0];
-    sum += helper::linear_similarity(rhs.length, lhs.length, 0.05)      * weights[1];
-    sum += helper::jaccard_similarity(rhs.genres, lhs.genres)           * weights[2];
-    sum += helper::jaccard_similarity(rhs.directors, lhs.directors)     * weights[3];
-    sum += helper::jaccard_similarity(rhs.actors_set, lhs.actors_set)   * weights[4];
+    sum += helper::step_similarity(rhs.year, lhs.year, 1)           * weights[0];
+    sum += helper::linear_similarity(rhs.length, lhs.length, 0.05)  * weights[1];
+    sum += helper::jaccard_similarity(rhs.genres, lhs.genres)       * weights[2];
+    sum += helper::jaccard_similarity(rhs.directors, lhs.directors) * weights[3];
+    sum += helper::jaccard_similarity(rhs.actors, lhs.actors)       * weights[4];
     
     return sum / 100;
 }
@@ -82,21 +82,21 @@ int main(int argc, char* argv[])
     }
 
     std::vector<Movie> movies;
-    csv::Reader reader(input, '\t');
+    csv::Reader reader(input, csv::separator::tab);
     for (csv::Row& row : reader)
         movies.emplace_back(row);
 
     std::cout << "Movie collection size: " << movies.size() << std::endl;
 
     // Block building & block refinement
-    auto blocking_key = [](const Movie& m) { return m.actors; };
+    auto blocking_key = [](const Movie& m) { return m.directors_str; };
     er::Blocks blocks = er::make_standard_blocks(movies, blocking_key);
-    er::block_purging(blocks, 2, 2);
+    er::block_purging(blocks, 338, 2);  ///< Magic number: 338 is the size of the second biggest block (first one is \N)
 
-    const double threshold = 0.75;
+    const double threshold = 0.85;
     const std::vector<double> weights { 30, 30, 10, 15, 15 };
     
-    // Expected duplicates: 279229 duplicates
+    // // Expected duplicates: 279229 duplicates
     const std::vector<std::pair<int, int>> duplicates = er::matching(movies, blocks, similarity_function, weights, threshold);
     std::cout << duplicates.size() << " duplicates found, check result.tsv for more details." << std::endl;
 

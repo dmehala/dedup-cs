@@ -29,14 +29,21 @@ Blocks make_standard_blocks(const std::vector<E>& entities, F&& generate_bk)
 
     for (int i = 0; i < sz; ++i) {
         const auto& entity = entities[i];
+        R key = generate_bk(entity);
 
-        Block& block = map[generate_bk(entity)];
+        Block& block = map[key];
         block.emplace_back(i);
     }
 
+    // auto a = map[" Shinde"];
+    // auto b = map["Stephen Ang"];
+
     Blocks blocks;
     for (auto it = map.cbegin(); it != map.cend(); ++it)
-        blocks.emplace_back(it->second);
+    {
+        Block block = it->second;
+        blocks.push_back(block);
+    }
 
     return blocks;
 }
@@ -99,18 +106,31 @@ inline void block_purging(Blocks& blocks, const int max, const int min=0)
     blocks.erase(std::remove_if(blocks.begin(), blocks.end(), [min, max](Block& block) { return block.size() < min || block.size() > max; }), blocks.cend());
 }
 
-// Filtering algorithm
+// Filtering/Matching algorithm
 template <typename E, typename F>
 std::vector<std::pair<int, int>> matching(const std::vector<E>& entities, const Blocks& blocks, F&& similarity_func, const std::vector<double> weights, const double threshold)
 {
+    std::set<int> seen;
     std::vector<std::pair<int, int>> result;
 
     for (const er::Block& b : blocks) {
         const auto block_size = b.size();
         for (auto i = 0; i < block_size; ++i) {
+
+            if (seen.find(b[i]) != seen.cend())
+                continue;
+
             for (auto j = i + 1; j < block_size; ++j) {
-                if (similarity_func(entities[b[i]], entities[b[j]], weights) >= threshold)
+
+                if (seen.find(b[j]) != seen.cend())
+                    continue;
+
+                if (similarity_func(entities[b[i]], entities[b[j]], weights) >= threshold) {
                     result.push_back(std::make_pair(b[i], b[j]));
+                    seen.insert(b[i]);
+                    seen.insert(b[j]);
+                    break;
+                }
             }
         }
     }
